@@ -1,0 +1,655 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Leadership Quest - MVGFC</title>
+  <script crossorigin src="https://unpkg.com/react@18/umd/react.production.min.js"></script>
+  <script crossorigin src="https://unpkg.com/react-dom@18/umd/react-dom.production.min.js"></script>
+  <script src="https://unpkg.com/@babel/standalone/babel.min.js"></script>
+  <script src="https://cdn.tailwindcss.com"></script>
+</head>
+<body>
+  <div id="root"></div>
+  
+  <script type="text/babel">
+    const { useState } = React;
+
+    function LeadershipAssessment() {
+      const [screen, setScreen] = useState('welcome');
+      const [currentQuestion, setCurrentQuestion] = useState(0);
+      const [formData, setFormData] = useState({
+        fullName: '',
+        gradeLevel: '',
+        school: '',
+        address: '',
+        mobile: '',
+        email: '',
+        dreamCareer: '',
+        consent: false,
+        answers: {}
+      });
+      const [result, setResult] = useState(null);
+      const [showConfetti, setShowConfetti] = useState(false);
+      const [scoreAnimation, setScoreAnimation] = useState(0);
+      const [touchStart, setTouchStart] = useState(0);
+      const [isSubmitting, setIsSubmitting] = useState(false);
+
+      const questions = [
+        {
+          id: 'q1',
+          dimension: 'Integrity',
+          icon: '🎯',
+          question: 'May nakita kang "glitch" sa system ng school niyo at alam mong pwede mo itong gamitin para tumaas ang grades mo nang walang nakakaalam. Anong gagawin mo?',
+          choices: [
+            { text: 'I\'ll use it! Mindset ba, mindset!', value: 1, emoji: '😈' },
+            { text: 'Dedma lang, hindi ko naman kasalanan yung glitch.', value: 2, emoji: '🤷' },
+            { text: 'I\'ll report it to the teacher agad. Integrity over grades!', value: 3, emoji: '⚖️' }
+          ]
+        },
+        {
+          id: 'q2',
+          dimension: 'Initiative',
+          icon: '🚀',
+          question: 'Grabe ang baha sa labas ng school niyo. Maraming basura ang bumabara sa kanal. What\'s your move?',
+          choices: [
+            { text: 'Magrereklamo sa Facebook/X about poor governance.', value: 1, emoji: '📱' },
+            { text: 'Maghihintay na may mag-utos na maglinis.', value: 2, emoji: '⏳' },
+            { text: 'Mag-oorganize ng small group of friends para simulan ang paglilinis.', value: 3, emoji: '💪' }
+          ]
+        },
+        {
+          id: 'q3',
+          dimension: 'Influence',
+          icon: '👥',
+          question: 'Inaaya ka ng "cool" friends mo na gumawa ng isang toxic TikTok trend na alam mong makakasakit sa iba. How will you react?',
+          choices: [
+            { text: 'Gagawin ko para sumikat at magka-clout!', value: 1, emoji: '📸' },
+            { text: 'Hahayaan ko sila pero hindi ako sasali.', value: 2, emoji: '🙈' },
+            { text: 'I\'ll tell them it\'s wrong and suggest a better/funnier content instead.', value: 3, emoji: '💡' }
+          ]
+        },
+        {
+          id: 'q4',
+          dimension: 'Grit & Responsibility',
+          icon: '💎',
+          question: 'May group project kayo pero yung leader niyo ay biglang naging MIA (Missing in Action). Deadline na bukas. Anong gagawin mo?',
+          choices: [
+            { text: 'Hahayaan ko na lang, siya naman ang leader eh.', value: 1, emoji: '😴' },
+            { text: 'Gagawin ko lang yung part ko, bahala na sila sa iba.', value: 2, emoji: '🤔' },
+            { text: 'I\'ll step up as interim leader para matapos ang project on time.', value: 3, emoji: '🔥' }
+          ]
+        },
+        {
+          id: 'q5',
+          dimension: 'Vision',
+          icon: '🔮',
+          question: 'Naniniwala ka ba na ang isang estudyanteng katulad mo ay kayang baguhin ang sistema sa Cabanatuan?',
+          choices: [
+            { text: 'Hindi, sobrang hirap at magulo na ng mundo.', value: 1, emoji: '😔' },
+            { text: 'Pwede, pero kailangan muna ng matinding tulong.', value: 2, emoji: '🤝' },
+            { text: 'Oo, nagsisimula ang pagbabago sa maliliit na inisyatiba ko.', value: 3, emoji: '🌟' }
+          ]
+        }
+      ];
+
+      const calculateScore = () => {
+        return Object.values(formData.answers).reduce((sum, val) => sum + val, 0);
+      };
+
+      const getPersona = (score) => {
+        if (score >= 13) return {
+          title: 'The Nation Builder',
+          emoji: '👑',
+          badge: 'LEGENDARY LEADER',
+          color: 'from-yellow-400 to-orange-500',
+          description: 'You have exceptional leadership DNA! Rare ka sa generation mo—may integrity, initiative, at vision para mag-lead ng tunay na pagbabago.',
+          percentile: 95,
+          ctaTitle: 'Ready to Lead the Nation?',
+          ctaMessage: 'At MVGFC, we develop future leaders like you. Join our Leadership Development Programs and unlock your full potential.',
+          programHighlight: '🎓 Student Government • 🌍 Community Impact Projects • 💼 Industry Partnerships'
+        };
+        if (score >= 9) return {
+          title: 'The Rising Catalyst',
+          emoji: '⚡',
+          badge: 'RISING STAR',
+          color: 'from-blue-400 to-purple-500',
+          description: 'May leadership spark ka na! You have the foundation—kailangan mo lang ng tamang training at environment para mag-level up.',
+          percentile: 70,
+          ctaTitle: 'Transform Into a Leader',
+          ctaMessage: 'MVGFC offers hands-on leadership training, mentorship programs, and real-world experiences to help you become the catalyst you\'re meant to be.',
+          programHighlight: '📚 Leadership Workshops • 🤝 Peer Mentoring • 🎯 Career Readiness Programs'
+        };
+        return {
+          title: 'The Awakening Leader',
+          emoji: '🌱',
+          badge: 'EMERGING POTENTIAL',
+          color: 'from-green-400 to-teal-500',
+          description: 'Every leader starts somewhere! Ang importante—may awareness ka na. With the right guidance, kaya mong mag-bloom as a leader.',
+          percentile: 45,
+          ctaTitle: 'Start Your Leadership Journey',
+          ctaMessage: 'At MVGFC, we believe every student can become a leader. Our supportive community and development programs will help you discover and grow your leadership potential.',
+          programHighlight: '🌱 Personal Development • 👨‍🏫 Expert Mentors • 🎪 Student Organizations'
+        };
+      };
+
+      const handleAnswer = (questionId, value) => {
+        // Prevent answering if already submitting
+        if (isSubmitting) return;
+        
+        const updatedAnswers = { ...formData.answers, [questionId]: value };
+        
+        setFormData(prev => ({
+          ...prev,
+          answers: updatedAnswers
+        }));
+        
+        setTimeout(() => {
+          if (currentQuestion < questions.length - 1) {
+            setCurrentQuestion(currentQuestion + 1);
+          } else {
+            submitAssessment(updatedAnswers);
+          }
+        }, 300);
+      };
+
+      const submitAssessment = async (answersToSubmit) => {
+        // Prevent double submission
+        if (isSubmitting) {
+          console.log('Submission already in progress, ignoring duplicate request');
+          return;
+        }
+        
+        setIsSubmitting(true);
+        
+        const finalAnswers = answersToSubmit || formData.answers;
+        
+        const score = Object.values(finalAnswers).reduce((sum, val) => sum + val, 0);
+        const persona = getPersona(score);
+        
+        setShowConfetti(true);
+        setTimeout(() => setShowConfetti(false), 3000);
+
+        const submissionData = {
+          timestamp: new Date().toISOString().split('T')[0],
+          fullName: formData.fullName,
+          gradeLevel: formData.gradeLevel,
+          school: formData.school,
+          address: formData.address,
+          mobile: '+63' + formData.mobile.slice(1),
+          email: formData.email,
+          dreamCareer: formData.dreamCareer,
+          score: score,
+          persona: persona.title,
+          q1_integrity: finalAnswers.q1 || 0,
+          q2_initiative: finalAnswers.q2 || 0,
+          q3_influence: finalAnswers.q3 || 0,
+          q4_grit_responsibility: finalAnswers.q4 || 0,
+          q5_vision: finalAnswers.q5 || 0
+        };
+
+        const SCRIPT_URL = 'https://script.google.com/macros/s/AKfycbyyOP_jdTonpgypmtu1CQD46ABJXIyICzahGF6SFYNB3jvlcDyx86IjAqpJL_Mur_m5/exec';
+
+        try {
+          await fetch(SCRIPT_URL, {
+            method: 'POST',
+            mode: 'no-cors',
+            headers: { 'Content-Type': 'application/json' },
+            body: JSON.stringify(submissionData)
+          });
+          console.log('Submitted data:', submissionData);
+        } catch (error) {
+          console.error('Submission error:', error);
+        }
+
+        setResult({ score, persona });
+        setScreen('result');
+        animateScore(score);
+      };
+
+      const animateScore = (finalScore) => {
+        let current = 0;
+        const increment = finalScore / 20;
+        const timer = setInterval(() => {
+          current += increment;
+          if (current >= finalScore) {
+            setScoreAnimation(finalScore);
+            clearInterval(timer);
+          } else {
+            setScoreAnimation(Math.floor(current));
+          }
+        }, 50);
+      };
+
+      const handleTouchStart = (e) => {
+        setTouchStart(e.touches[0].clientX);
+      };
+
+      const handleTouchEnd = (e) => {
+        const touchEnd = e.changedTouches[0].clientX;
+        const diff = touchStart - touchEnd;
+        
+        if (Math.abs(diff) > 50) {
+          if (diff > 0 && currentQuestion < questions.length - 1) {
+            if (formData.answers[questions[currentQuestion].id]) {
+              setCurrentQuestion(currentQuestion + 1);
+            }
+          } else if (diff < 0 && currentQuestion > 0) {
+            setCurrentQuestion(currentQuestion - 1);
+          }
+        }
+      };
+
+      const progressPercentage = screen === 'info' ? 0 : 
+        screen === 'questions' ? ((currentQuestion + 1) / questions.length) * 100 : 100;
+
+      if (screen === 'welcome') {
+        return (
+          <div className="min-h-screen bg-gradient-to-br from-green-400 via-green-500 to-teal-600 flex items-center justify-center p-4">
+            <div className="max-w-md w-full text-center">
+              <div className="mb-6">
+                <img 
+                  src="gallego.png" 
+                  alt="MVGFC Logo" 
+                  className="w-28 h-28 mx-auto rounded-full bg-white p-2 shadow-2xl"
+                  onError={(e) => {
+                    e.target.style.display = 'none';
+                    e.target.nextElementSibling.style.display = 'flex';
+                  }}
+                />
+                <div className="w-28 h-28 mx-auto rounded-full bg-white p-2 shadow-2xl items-center justify-center text-4xl font-black text-green-600" style={{display: 'none'}}>
+                  MVGFC
+                </div>
+              </div>
+              <div className="text-8xl mb-6 animate-bounce">🎮</div>
+              <h1 className="text-4xl font-black text-white mb-4 drop-shadow-lg">
+                Leadership Quest
+              </h1>
+              <p className="text-xl text-white/90 mb-2 font-medium">
+                Discover your leadership superpowers in 5 minutes! 🚀
+              </p>
+              <p className="text-sm text-white/75 mb-8 italic">
+                Presented by Manuel V. Gallego Foundation Colleges
+              </p>
+              <button
+                onClick={() => setScreen('info')}
+                className="bg-white text-green-600 px-8 py-4 rounded-full text-xl font-bold shadow-2xl hover:scale-105 transition-transform duration-200"
+              >
+                Start Quest 🎯
+              </button>
+              <p className="text-white/70 text-sm mt-6">🎮 Fun • 📱 Mobile-Friendly • ⚡ Quick</p>
+            </div>
+          </div>
+        );
+      }
+
+      if (screen === 'info') {
+        return (
+          <div className="min-h-screen bg-gradient-to-br from-green-400 via-emerald-500 to-green-600 p-4">
+            <div className="max-w-md mx-auto">
+              <div className="text-center mb-4">
+                <img 
+                  src="gallego.png" 
+                  alt="MVGFC Logo" 
+                  className="w-20 h-20 mx-auto rounded-full bg-white p-2 shadow-xl"
+                  onError={(e) => {
+                    e.target.style.display = 'none';
+                    e.target.nextElementSibling.style.display = 'flex';
+                  }}
+                />
+                <div className="w-20 h-20 mx-auto rounded-full bg-white p-2 shadow-xl items-center justify-center text-2xl font-black text-green-600" style={{display: 'none'}}>
+                  MVGFC
+                </div>
+              </div>
+              
+              <div className="bg-white/10 backdrop-blur-lg rounded-3xl p-1 mb-4">
+                <div className="bg-green-500 h-2 rounded-full" style={{ width: `${progressPercentage}%` }}></div>
+              </div>
+
+              <div className="bg-white rounded-3xl shadow-2xl p-8">
+                <div className="text-center mb-6">
+                  <div className="text-6xl mb-4">📝</div>
+                  <h2 className="text-2xl font-black text-gray-800 mb-2">About You</h2>
+                  <p className="text-gray-600">Quick info para sa iyong profile</p>
+                </div>
+
+                <div className="space-y-4">
+                  <input
+                    type="text"
+                    placeholder="Full Name"
+                    value={formData.fullName}
+                    onChange={(e) => setFormData({...formData, fullName: e.target.value})}
+                    className="w-full px-4 py-3 rounded-xl border-2 border-gray-200 focus:border-green-500 focus:outline-none text-lg"
+                  />
+
+                  <select
+                    value={formData.gradeLevel}
+                    onChange={(e) => setFormData({...formData, gradeLevel: e.target.value})}
+                    className="w-full px-4 py-3 rounded-xl border-2 border-gray-200 focus:border-green-500 focus:outline-none text-lg"
+                  >
+                    <option value="">Grade Level</option>
+                    <option value="9">Grade 9</option>
+                    <option value="10">Grade 10</option>
+                    <option value="11">Grade 11</option>
+                  </select>
+
+                  <input
+                    type="text"
+                    placeholder="School"
+                    value={formData.school}
+                    onChange={(e) => setFormData({...formData, school: e.target.value})}
+                    className="w-full px-4 py-3 rounded-xl border-2 border-gray-200 focus:border-green-500 focus:outline-none text-lg"
+                  />
+
+                  <input
+                    type="text"
+                    placeholder="Address"
+                    value={formData.address}
+                    onChange={(e) => setFormData({...formData, address: e.target.value})}
+                    className="w-full px-4 py-3 rounded-xl border-2 border-gray-200 focus:border-green-500 focus:outline-none text-lg"
+                  />
+
+                  <input
+                    type="tel"
+                    placeholder="Mobile Number (09XXXXXXXXX)"
+                    value={formData.mobile}
+                    onChange={(e) => {
+                      let value = e.target.value.replace(/\D/g, '');
+                      if (value.startsWith('63')) {
+                        value = '0' + value.slice(2);
+                      }
+                      if (value.length <= 11) {
+                        setFormData({...formData, mobile: value});
+                      }
+                    }}
+                    maxLength="11"
+                    pattern="09[0-9]{9}"
+                    className="w-full px-4 py-3 rounded-xl border-2 border-gray-200 focus:border-green-500 focus:outline-none text-lg"
+                  />
+                  {formData.mobile && formData.mobile.length > 0 && formData.mobile.length !== 11 && (
+                    <p className="text-red-500 text-sm mt-1">Mobile number must be 11 digits</p>
+                  )}
+                  {formData.mobile && formData.mobile.length === 11 && !formData.mobile.startsWith('09') && (
+                    <p className="text-red-500 text-sm mt-1">Mobile number must start with 09</p>
+                  )}
+
+                  <input
+                    type="email"
+                    placeholder="Email Address"
+                    value={formData.email}
+                    onChange={(e) => {
+                      const value = e.target.value.toLowerCase().trim();
+                      setFormData({...formData, email: value});
+                    }}
+                    pattern="[a-z0-9._%+-]+@[a-z0-9.-]+\.[a-z]{2,}$"
+                    className="w-full px-4 py-3 rounded-xl border-2 border-gray-200 focus:border-green-500 focus:outline-none text-lg"
+                  />
+                  {formData.email && !(/^[a-z0-9._%+-]+@[a-z0-9.-]+\.[a-z]{2,}$/.test(formData.email)) && (
+                    <p className="text-red-500 text-sm mt-1">Please enter a valid email address</p>
+                  )}
+
+                  <input
+                    type="text"
+                    placeholder="Dream Career (e.g., Nurse, Policeman)"
+                    value={formData.dreamCareer}
+                    onChange={(e) => setFormData({...formData, dreamCareer: e.target.value})}
+                    className="w-full px-4 py-3 rounded-xl border-2 border-gray-200 focus:border-green-500 focus:outline-none text-lg"
+                  />
+
+                  <label className="flex items-start space-x-3 cursor-pointer">
+                    <input
+                      type="checkbox"
+                      checked={formData.consent}
+                      onChange={(e) => setFormData({...formData, consent: e.target.checked})}
+                      className="mt-1 w-5 h-5 text-green-600"
+                    />
+                    <span className="text-sm text-gray-600">
+                      I agree that my responses may be used for student development and leadership programs.
+                    </span>
+                  </label>
+                </div>
+
+                <button
+                  onClick={() => {
+                    if (!formData.fullName || !formData.gradeLevel || !formData.school || 
+                        !formData.address || !formData.mobile || !formData.email || !formData.dreamCareer || !formData.consent) {
+                      alert('Please fill in all fields and agree to the consent.');
+                      return;
+                    }
+                    
+                    if (formData.mobile.length !== 11) {
+                      alert('Mobile number must be exactly 11 digits.');
+                      return;
+                    }
+                    if (!formData.mobile.startsWith('09')) {
+                      alert('Mobile number must start with 09.');
+                      return;
+                    }
+                    
+                    const emailRegex = /^[a-z0-9._%+-]+@[a-z0-9.-]+\.[a-z]{2,}$/;
+                    if (!emailRegex.test(formData.email)) {
+                      alert('Please enter a valid email address (e.g., yourname@example.com).');
+                      return;
+                    }
+                    
+                    setScreen('questions');
+                  }}
+                  className="w-full mt-6 bg-gradient-to-r from-green-500 to-green-600 text-white py-4 rounded-xl text-lg font-bold shadow-lg hover:shadow-xl transition-all"
+                >
+                  Continue to Questions 🚀
+                </button>
+              </div>
+            </div>
+          </div>
+        );
+      }
+
+      if (screen === 'questions') {
+        const question = questions[currentQuestion];
+        const answered = formData.answers[question.id];
+
+        return (
+          <div 
+            className="min-h-screen bg-gradient-to-br from-teal-400 via-green-500 to-emerald-600 p-4"
+            onTouchStart={handleTouchStart}
+            onTouchEnd={handleTouchEnd}
+          >
+            <div className="max-w-md mx-auto">
+              <div className="text-center mb-3">
+                <img 
+                  src="gallego.png" 
+                  alt="MVGFC Logo" 
+                  className="w-16 h-16 mx-auto rounded-full bg-white p-1 shadow-lg"
+                  onError={(e) => {
+                    e.target.style.display = 'none';
+                    e.target.nextElementSibling.style.display = 'flex';
+                  }}
+                />
+                <div className="w-16 h-16 mx-auto rounded-full bg-white p-1 shadow-lg items-center justify-center text-xl font-black text-green-600" style={{display: 'none'}}>
+                  MVGFC
+                </div>
+              </div>
+              
+              <div className="bg-white/10 backdrop-blur-lg rounded-3xl p-1 mb-4">
+                <div 
+                  className="bg-green-500 h-2 rounded-full transition-all duration-500"
+                  style={{ width: `${progressPercentage}%` }}
+                ></div>
+              </div>
+
+              <div className="text-white text-center mb-4">
+                <p className="text-sm font-medium">Question {currentQuestion + 1} of {questions.length}</p>
+                <p className="text-xs opacity-75">Swipe to navigate →</p>
+                {isSubmitting && (
+                  <p className="text-sm font-bold mt-2 animate-pulse">✨ Submitting your results...</p>
+                )}
+              </div>
+
+              <div className="bg-white rounded-3xl shadow-2xl p-8 mb-4">
+                <div className="text-center mb-6">
+                  <div className="text-6xl mb-4">{question.icon}</div>
+                  <span className="inline-block bg-green-100 text-green-700 px-4 py-1 rounded-full text-sm font-bold mb-4">
+                    {question.dimension}
+                  </span>
+                  <h3 className="text-xl font-bold text-gray-800">
+                    {question.question}
+                  </h3>
+                </div>
+
+                <div className="space-y-3">
+                  {question.choices.map((choice, idx) => (
+                    <button
+                      key={idx}
+                      onClick={() => handleAnswer(question.id, choice.value)}
+                      disabled={isSubmitting}
+                      className={`w-full p-4 rounded-xl border-2 transition-all text-left flex items-center space-x-3 ${
+                        answered === choice.value
+                          ? 'border-green-500 bg-green-50 shadow-lg scale-105'
+                          : 'border-gray-200 hover:border-green-300 hover:bg-gray-50'
+                      } ${isSubmitting ? 'opacity-50 cursor-not-allowed' : ''}`}
+                    >
+                      <span className="text-3xl">{choice.emoji}</span>
+                      <span className="text-gray-700 font-medium flex-1">{choice.text}</span>
+                      {answered === choice.value && <span className="text-green-500 text-xl">✓</span>}
+                    </button>
+                  ))}
+                </div>
+              </div>
+
+              <div className="flex justify-between">
+                <button
+                  onClick={() => currentQuestion > 0 && setCurrentQuestion(currentQuestion - 1)}
+                  disabled={currentQuestion === 0}
+                  className="bg-white/20 backdrop-blur text-white px-6 py-2 rounded-full font-medium disabled:opacity-30"
+                >
+                  ← Back
+                </button>
+                <button
+                  onClick={() => {
+                    if (answered && currentQuestion < questions.length - 1) {
+                      setCurrentQuestion(currentQuestion + 1);
+                    }
+                  }}
+                  disabled={!answered || currentQuestion === questions.length - 1}
+                  className="bg-white text-green-600 px-6 py-2 rounded-full font-bold disabled:opacity-30"
+                >
+                  Next →
+                </button>
+              </div>
+            </div>
+          </div>
+        );
+      }
+
+      if (screen === 'result' && result) {
+        return (
+          <div className="min-h-screen bg-gradient-to-br from-green-500 via-emerald-600 to-teal-700 p-4 py-12 relative overflow-hidden">
+            {showConfetti && (
+              <div className="fixed inset-0 pointer-events-none z-50">
+                {[...Array(50)].map((_, i) => (
+                  <div
+                    key={i}
+                    className="absolute text-2xl animate-ping"
+                    style={{
+                      left: `${Math.random() * 100}%`,
+                      top: `${Math.random() * 100}%`,
+                      animationDelay: `${Math.random() * 2}s`,
+                      animationDuration: '1s'
+                    }}
+                  >
+                    {['🎉', '⭐', '🎊', '✨', '🏆'][Math.floor(Math.random() * 5)]}
+                  </div>
+                ))}
+              </div>
+            )}
+
+            <div className="max-w-md mx-auto relative z-10">
+              <div className="text-center mb-4">
+                <img 
+                  src="gallego.png" 
+                  alt="MVGFC Logo" 
+                  className="w-24 h-24 mx-auto rounded-full bg-white p-2 shadow-2xl mb-4"
+                  onError={(e) => {
+                    e.target.style.display = 'none';
+                    e.target.nextElementSibling.style.display = 'flex';
+                  }}
+                />
+                <div className="w-24 h-24 mx-auto rounded-full bg-white p-2 shadow-2xl items-center justify-center text-3xl font-black text-green-600 mb-4" style={{display: 'none'}}>
+                  MVGFC
+                </div>
+              </div>
+
+              <div className="bg-white rounded-3xl shadow-2xl p-8 mb-4">
+                <div className="text-center mb-6">
+                  <div className="text-7xl mb-4">{result.persona.emoji}</div>
+                  <div className={`inline-block bg-gradient-to-r ${result.persona.color} text-white px-6 py-2 rounded-full font-black text-sm mb-4 shadow-lg`}>
+                    {result.persona.badge}
+                  </div>
+                  
+                  <h2 className="text-3xl font-black text-gray-800 mb-4">
+                    {result.persona.title}
+                  </h2>
+                  
+                  <div className="bg-gradient-to-r from-green-100 to-blue-100 rounded-2xl p-6 mb-6">
+                    <p className="text-gray-500 text-sm mb-2">Your Leadership Score</p>
+                    <div className="text-6xl font-black bg-gradient-to-r from-green-600 to-blue-600 bg-clip-text text-transparent">
+                      {scoreAnimation}/15
+                    </div>
+                  </div>
+
+                  <p className="text-gray-700 mb-6 leading-relaxed">
+                    {result.persona.description}
+                  </p>
+
+                  <div className="bg-yellow-50 border-2 border-yellow-300 rounded-2xl p-4 mb-6">
+                    <p className="text-yellow-800 font-bold text-sm mb-1">🏆 LEADERBOARD</p>
+                    <p className="text-yellow-700 text-xs">
+                      You scored higher than <span className="font-black text-lg">{result.persona.percentile}%</span> of students!
+                    </p>
+                  </div>
+                </div>
+
+                <div className="bg-gradient-to-br from-green-500 to-green-700 text-white rounded-2xl p-6 mb-6 shadow-xl">
+                  <h3 className="text-xl font-black mb-3">{result.persona.ctaTitle}</h3>
+                  <p className="text-sm mb-4 leading-relaxed">
+                    {result.persona.ctaMessage}
+                  </p>
+                  <div className="bg-white/20 backdrop-blur rounded-xl p-3 text-xs mb-4">
+                    {result.persona.programHighlight}
+                  </div>
+                  <button 
+                    onClick={() => window.open('https://www.facebook.com/MVGFCI', '_blank')}
+                    className="w-full bg-white text-green-600 py-3 rounded-xl font-bold hover:scale-105 transition-transform"
+                  >
+                    Learn More About MVGFC 🎓
+                  </button>
+                </div>
+
+                <div className="text-center text-sm text-gray-500 mb-4">
+                  📧 Check your email/SMS for your complete leadership profile and next steps!
+                </div>
+
+                <button
+                  onClick={() => window.location.reload()}
+                  className="w-full bg-gradient-to-r from-gray-500 to-gray-600 text-white py-3 rounded-xl font-bold shadow-lg"
+                >
+                  Take Assessment Again 🔄
+                </button>
+              </div>
+
+              <div className="text-center text-white text-xs opacity-75">
+                Powered by Manuel V. Gallego Foundation Colleges
+              </div>
+            </div>
+          </div>
+        );
+      }
+
+      return null;
+    }
+
+    const root = ReactDOM.createRoot(document.getElementById('root'));
+    root.render(<LeadershipAssessment />);
+  </script>
+</body>
+</html>
